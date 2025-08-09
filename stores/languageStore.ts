@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Language } from '../types/api';
-import { SELECTED_SOURCE_LANGUAGE, SELECTED_TARGET_LANGUAGE1, SELECTED_TARGET_LANGUAGE2 } from '@/utils/constants';
+import { SELECTED_SOURCE_LANGUAGE, SELECTED_TARGET_LANGUAGE1, SELECTED_TARGET_LANGUAGE2 } from '../lib/constants';
 
 export interface LanguageState {
   languages: Language[];
@@ -9,6 +9,8 @@ export interface LanguageState {
   selectedTargetLanguage2: Language | null;
   loading: boolean;
   error: string | null;
+  showSelectLanguageModal: boolean;
+  setShowSelectLanguageModal: (show: boolean) => void;
   
   // Actions
   setLanguages: (languages: Language[]) => void;
@@ -28,7 +30,9 @@ export const useLanguageStore = create<LanguageState>((set) => ({
   selectedTargetLanguage2: null,
   loading: false,
   error: null,
-
+  showSelectLanguageModal: false,
+  setShowSelectLanguageModal: (show) => set({ showSelectLanguageModal: show }),
+  
   setLanguages: (languages) => set({ languages }),
   setSelectedSourceLanguage: (language) => {
     set({ selectedSourceLanguage: language });

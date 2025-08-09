@@ -1,70 +1,94 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { Select } from './ui/Select';
+import { Button } from './ui/Button';
+import { useLanguageStore } from 'stores/languageStore';
+import { colors } from 'lib/theme';
 
 interface SelectLanguagesProps {
-  visible: boolean;
-  onClose: () => void;
+  onClose?: () => void;
+  onConfirm?: () => void;
 }
 
 const { width, height } = Dimensions.get('window');
 
-export const SelectLanguages: React.FC<SelectLanguagesProps> = ({
-  visible,
-  onClose,
-}) => {
+export const SelectLanguages: React.FC<SelectLanguagesProps> = ({ onClose, onConfirm }) => {
+  const { showSelectLanguageModal, setShowSelectLanguageModal } = useLanguageStore();
+
+  const handleClose = () => {
+    setShowSelectLanguageModal(false);
+    onClose?.();
+  };
+
+  const handleConfirm = () => {
+    setShowSelectLanguageModal(false);
+    onConfirm?.();
+  };
+
   return (
     <Modal
-      visible={visible}
+      visible={showSelectLanguageModal}
       transparent={true}
       animationType="slide"
-      onRequestClose={onClose}
-    >
+      onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <View style={styles.header}>
             <Text style={styles.title}>Select Languages</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.content}>
-            <Text style={styles.description}>
-              Choose your preferred languages for the application.
-            </Text>
-            
-            <View style={styles.languageSection}>
-              <Text style={styles.sectionTitle}>Source Language</Text>
-              <Text style={styles.languageText}>English (Default)</Text>
-            </View>
-            
-            <View style={styles.languageSection}>
-              <Text style={styles.sectionTitle}>Target Languages</Text>
-              <Text style={styles.languageText}>Spanish</Text>
-              <Text style={styles.languageText}>French</Text>
-              <Text style={styles.languageText}>German</Text>
-            </View>
-            
-            <Text style={styles.note}>
-              This is a placeholder for the language selection interface. 
-              You can customize this modal with actual language selection components.
-            </Text>
+            <Select
+              label="Source Language"
+              placeholder="Select a language"
+              data={[
+                {
+                  label: 'English',
+                  value: 'en',
+                },
+                {
+                  label: 'Spanish',
+                  value: 'es',
+                },
+              ]}
+              onSelect={() => {}}
+            />
+
+            <Select
+              label="Target Language 1"
+              placeholder="Select a language"
+              data={[
+                {
+                  label: 'Spanish',
+                  value: 'es',
+                },
+                {
+                  label: 'French',
+                  value: 'fr',
+                },
+              ]}
+              onSelect={() => {}}
+            />
+
+            <Select
+              label="Target Language 2"
+              placeholder="Select a language"
+              data={[
+                {
+                  label: 'French',
+                  value: 'fr',
+                },
+              ]}
+              onSelect={() => {}}
+            />
           </View>
-          
+
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton} onPress={onClose}>
-              <Text style={styles.confirmButtonText}>Confirm</Text>
-            </TouchableOpacity>
+            {/* <Button title="Cancel" onPress={onClose} type="secondary" /> */}
+            <Button title="Save and continue" onPress={handleConfirm} type="primary" outline fullWidth />
           </View>
         </View>
       </View>
@@ -98,6 +122,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: colors.lightGray,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
@@ -122,7 +149,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    flex: 1,
   },
   description: {
     fontSize: 16,
