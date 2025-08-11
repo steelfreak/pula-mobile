@@ -1,8 +1,9 @@
 import { useCallback, useEffect } from "react";
-import { api } from "@/lib/api";
-import { useLanguageStore, useLexemeStore } from "@/lib/stores";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuthStore } from "@/lib/stores/authStore";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from "lib/api";
+import { useLanguageStore, useLexemeStore } from "../stores";
+import { showToast } from '../lib/toast';
+import { useAuthStore } from "../stores/authStore";
 import {
   LexemeSearchRequest,
   LexemeDetailRequest,
@@ -10,19 +11,19 @@ import {
   AddLabeledTranslationRequest,
   AddAudioTranslationRequest,
   LexemeMissingAudioResquest,
-} from "@/lib/types/api";
+} from "../types/api";
 // Import store state types
-import type { LanguageState } from "@/lib/stores/languageStore";
-import type { LexemeState } from "@/lib/stores/lexemeStore";
-import type { AuthState } from "@/lib/stores/authStore";
+import type { LanguageState } from "../stores/languageStore";
+import type { LexemeState } from "../stores/lexemeStore";
+import type { AuthState } from "../stores/authStore";
 import {
   LIST_OF_LANGUAGES,
   LIST_OF_LEXEMES,
   SELECTED_LEXEME,
-} from "@/utils/constants";
+} from "../lib/constants";
+
 
 export const useApiWithStore = () => {
-  const { toast } = useToast();
   const token = useAuthStore((state: AuthState) => state.token);
   const hydrateAuth = useAuthStore((state: AuthState) => state.hydrate);
   const hydrateLanguage = useLanguageStore((state: LanguageState) => state.hydrate);
@@ -30,9 +31,12 @@ export const useApiWithStore = () => {
   
   // Hydrate all stores on mount
   useEffect(() => {
-    hydrateAuth();
-    hydrateLanguage();
-    hydrateLexeme();
+    const hydrateStores = async () => {
+      await hydrateAuth();
+      await hydrateLanguage();
+      await hydrateLexeme();
+    };
+    hydrateStores();
   }, [hydrateAuth, hydrateLanguage, hydrateLexeme]);
 
   // Use individual selectors to avoid object recreation
@@ -79,26 +83,20 @@ export const useApiWithStore = () => {
     try {
       const languages = await api.getLanguages();
       setLanguages(languages);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(LIST_OF_LANGUAGES, JSON.stringify(languages));
-      }
+      await AsyncStorage.setItem(LIST_OF_LANGUAGES, JSON.stringify(languages));
       return languages;
     } catch (error) {
       const apiError = error as ApiError;
       setLanguageError(apiError.message);
 
       // Show toast notification for error
-      toast({
-        title: "Error loading languages",
-        description: apiError.message,
-        variant: "destructive",
-      });
+      showToast.error("Error loading languages", apiError.message);
 
       throw apiError;
     } finally {
       setLanguageLoading(false);
     }
-  }, [setLanguages, setLanguageLoading, setLanguageError, toast, token]);
+  }, [setLanguages, setLanguageLoading, setLanguageError, token]);
 
   /**
    * Search for lexemes and store them in the store and local storage
@@ -116,27 +114,21 @@ export const useApiWithStore = () => {
       try {
         const lexemes = await api.searchLexemes(request);
         setLexemes(lexemes);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(LIST_OF_LEXEMES, JSON.stringify(lexemes));
-        }
+        await AsyncStorage.setItem(LIST_OF_LEXEMES, JSON.stringify(lexemes));
         return lexemes;
       } catch (error) {
         const apiError = error as ApiError;
         setLexemeError(apiError.message);
 
         // Show toast notification for error
-        toast({
-          title: "Error searching lexemes",
-          description: apiError.message,
-          variant: "destructive",
-        });
+        showToast.error("Error searching lexemes", apiError.message);
 
         throw apiError;
       } finally {
         setLexemeLoading(false);
       }
     },
-    [setLexemes, setQuery, setLexemeLoading, setLexemeError, toast]
+    [setLexemes, setQuery, setLexemeLoading, setLexemeError]
   );
 
   /**
@@ -170,31 +162,23 @@ export const useApiWithStore = () => {
 
     try {
       const details = await api.getLexemeDetails(request);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(SELECTED_LEXEME, JSON.stringify(details));
-      }
+      await AsyncStorage.setItem(SELECTED_LEXEME, JSON.stringify(details));
       setSelectedLexeme(details);
       return details;
     } catch (error) {
       const apiError = error as ApiError;
       setLexemeError(apiError.message);
       setSelectedLexeme(null);
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(SELECTED_LEXEME);
-      }
+      await AsyncStorage.removeItem(SELECTED_LEXEME);
 
       // Show toast notification for error
-      toast({
-        title: "Error loading lexeme details",
-        description: apiError.message,
-        variant: "destructive",
-      });
+      showToast.error("Error loading lexeme details", apiError.message);
 
       throw apiError;
     } finally {
       setLexemeLoading(false);
     }
-  }, [setSelectedLexeme, setLexemeLoading, setLexemeError, toast]);
+  }, [setSelectedLexeme, setLexemeLoading, setLexemeError]);
 
   /**
    * Add a labeled translation to a lexeme and store it in the store and local storage
@@ -256,17 +240,13 @@ export const useApiWithStore = () => {
       } catch (error) {
         const apiError = error as ApiError;
         setLexemeError(apiError.message);
-        toast({
-          title: "Error loading missing audio lexemes",
-          description: apiError.message,
-          variant: "destructive",
-        });
+        showToast.error("Error loading missing audio lexemes", apiError.message);
         throw apiError;
       } finally {
         setLexemeLoading(false);
       }
     },
-    [setLexemeLoading, setLexemeError, toast]
+    [setLexemeLoading, setLexemeError]
   );
 
   /**
@@ -277,14 +257,10 @@ export const useApiWithStore = () => {
       return await api.login();
     } catch (error) {
       const apiError = error as ApiError;
-      toast({
-        title: "Login failed",
-        description: apiError.message,
-        variant: "destructive",
-      });
+      showToast.error("Login failed", apiError.message);
       throw apiError;
     }
-  }, [toast]);
+  }, []);
 
   const setUsername = useAuthStore((state: AuthState) => state.setUsername);
   const setToken = useAuthStore((state: AuthState) => state.setToken);
@@ -301,15 +277,11 @@ export const useApiWithStore = () => {
         return response;
       } catch (error) {
         const apiError = error as ApiError;
-        toast({
-          title: "OAuth Callback failed",
-          description: apiError.message,
-          variant: "destructive",
-        });
+        showToast.error("OAuth Callback failed", apiError.message);
         throw apiError;
       }
     },
-    [toast, token, setUsername, setToken]
+    [token, setUsername, setToken]
   );
 
   /**
@@ -333,14 +305,10 @@ export const useApiWithStore = () => {
       clearUsername();
     } catch (error) {
       const apiError = error as ApiError;
-      toast({
-        title: "Logout failed",
-        description: apiError.message,
-        variant: "destructive",
-      });
+      showToast.error("Logout failed", apiError.message);
       throw apiError;
     }
-  }, [toast, token, clearToken, clearUsername]);
+  }, [token, clearToken, clearUsername]);
 
   return {
     addLabeledTranslation,

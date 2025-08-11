@@ -57,8 +57,6 @@ class ApiClient {
               break;
             case 401:
               errorMessage = 'Unauthorized: Please check your credentials.';
-              // localStorage.removeItem(TOKEN_KEY);
-              // window.location.href = '/';
               break;
             case 403:
               errorMessage = 'Forbidden: Access denied.';

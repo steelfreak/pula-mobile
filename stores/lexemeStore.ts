@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LexemeSearchResult, LexemeDetailResult } from '../types/api';
-import { CLICKED_LEXEME, LIST_OF_LEXEMES, SELECTED_LEXEME } from '@/utils/constants';
+import { CLICKED_LEXEME, LIST_OF_LEXEMES, SELECTED_LEXEME } from '../lib/constants';
 
 export interface LexemeState {
   lexemes: LexemeSearchResult[];
@@ -14,11 +15,11 @@ export interface LexemeState {
   setLexemes: (lexemes: LexemeSearchResult[]) => void;
   setQuery: (query: string) => void;
   setSelectedLexeme: (lexeme: LexemeDetailResult | null) => void;
-  setClickedLexeme: (lexeme: LexemeSearchResult | null) => void;
+  setClickedLexeme: (lexeme: LexemeSearchResult | null) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   reset: () => void;
-  hydrate: () => void;
+  hydrate: () => Promise<void>;
 }
 
 export const useLexemeStore = create<LexemeState>((set: any) => ({
@@ -32,11 +33,9 @@ export const useLexemeStore = create<LexemeState>((set: any) => ({
   setLexemes: (lexemes: any) => set({ lexemes }),
   setQuery: (query: string) => set({ query }),
   setSelectedLexeme: (lexeme: any) => set({ selectedLexeme: lexeme }),
-  setClickedLexeme: (lexeme: any) => {
+  setClickedLexeme: async (lexeme: any) => {
     set({ clickedLexeme: lexeme });
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(SELECTED_LEXEME, JSON.stringify(lexeme));
-    }
+    await AsyncStorage.setItem(SELECTED_LEXEME, JSON.stringify(lexeme));
   },
   setLoading: (loading: boolean) => set({ loading }),
   setError: (error: any) => set({ error }),
@@ -48,21 +47,19 @@ export const useLexemeStore = create<LexemeState>((set: any) => ({
     loading: false,
     error: null,
   }),
-  hydrate: () => {
-    if (typeof window !== 'undefined') {
-      const storedLexemes = localStorage.getItem(LIST_OF_LEXEMES);
-      const storedSelected = localStorage.getItem(SELECTED_LEXEME);
-      const storedClicked = localStorage.getItem(CLICKED_LEXEME);
-      
-      if (storedLexemes) {
-        set({ lexemes: JSON.parse(storedLexemes) });
-      }
-      if (storedSelected) {
-        set({ selectedLexeme: JSON.parse(storedSelected) });
-      }
-      if (storedClicked) {
-        set({ clickedLexeme: JSON.parse(storedClicked) });
-      }
+  hydrate: async () => {
+    const storedLexemes = await AsyncStorage.getItem(LIST_OF_LEXEMES);
+    const storedSelected = await AsyncStorage.getItem(SELECTED_LEXEME);
+    const storedClicked = await AsyncStorage.getItem(CLICKED_LEXEME);
+    
+    if (storedLexemes) {
+      set({ lexemes: JSON.parse(storedLexemes) });
+    }
+    if (storedSelected) {
+      set({ selectedLexeme: JSON.parse(storedSelected) });
+    }
+    if (storedClicked) {
+      set({ clickedLexeme: JSON.parse(storedClicked) });
     }
   },
 })); 

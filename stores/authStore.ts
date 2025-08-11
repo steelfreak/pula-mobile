@@ -1,54 +1,45 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const TOKEN_KEY = 'auth_token';
 
 export interface AuthState {
   token: string | null;
   username: string;
-  setToken: (token: string) => void;
-  clearToken: () => void;
-  hydrate: () => void;
+  setToken: (token: string) => Promise<void>;
+  clearToken: () => Promise<void>;
+  hydrate: () => Promise<void>;
   setUsername: (username: string) => void;
-  hydrateUsername: () => void;
-  clearUsername: () => void;
+  hydrateUsername: () => Promise<void>;
+  clearUsername: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set: any) => ({
   token: null,
   username: '', // Assuming you might want to store username as well
-  setToken: (token: string) => {
+  setToken: async (token: string) => {
     set({ token });
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOKEN_KEY, token);
-    }
+    await AsyncStorage.setItem(TOKEN_KEY, token);
   },
 
-  clearToken: () => {
+  clearToken: async () => {
     set({ token: null });
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOKEN_KEY);
-    }
+    await AsyncStorage.removeItem(TOKEN_KEY);
   },
-  hydrate: () => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(TOKEN_KEY);
-      if (stored) set({ token: stored });
-    }
+  hydrate: async () => {
+    const stored = await AsyncStorage.getItem(TOKEN_KEY);
+    if (stored) set({ token: stored });
   },
 
   setUsername: (username: string) => set({ username }),
 
-  hydrateUsername: () => {
-    if (typeof window !== 'undefined') {
-      const storedUsername = localStorage.getItem('username');
-      if (storedUsername) set({ username: storedUsername });
-    }
+  hydrateUsername: async () => {
+    const storedUsername = await AsyncStorage.getItem('username');
+    if (storedUsername) set({ username: storedUsername });
   },
 
-  clearUsername: () => {
+  clearUsername: async () => {
     set({ username: '' });
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('username');
-    }
+    await AsyncStorage.removeItem('username');
   },
 })); 

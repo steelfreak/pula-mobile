@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import { useLanguageStore } from 'stores/languageStore';
 import { colors } from 'lib/theme';
+import { useApiWithStore } from "hooks/useApiWithStore";
 
 interface SelectLanguagesProps {
   onClose?: () => void;
@@ -14,7 +15,7 @@ const { width, height } = Dimensions.get('window');
 
 export const SelectLanguages: React.FC<SelectLanguagesProps> = ({ onClose, onConfirm }) => {
   const { showSelectLanguageModal, setShowSelectLanguageModal } = useLanguageStore();
-
+  const { getLanguages } = useApiWithStore();
   const handleClose = () => {
     setShowSelectLanguageModal(false);
     onClose?.();
@@ -24,6 +25,10 @@ export const SelectLanguages: React.FC<SelectLanguagesProps> = ({ onClose, onCon
     setShowSelectLanguageModal(false);
     onConfirm?.();
   };
+
+  useEffect(() => {
+    getLanguages();
+  }, []);
 
   return (
     <Modal
@@ -88,7 +93,13 @@ export const SelectLanguages: React.FC<SelectLanguagesProps> = ({ onClose, onCon
 
           <View style={styles.footer}>
             {/* <Button title="Cancel" onPress={onClose} type="secondary" /> */}
-            <Button title="Save and continue" onPress={handleConfirm} type="primary" outline fullWidth />
+            <Button
+              title="Save and continue"
+              onPress={handleConfirm}
+              type="primary"
+              outline
+              fullWidth
+            />
           </View>
         </View>
       </View>

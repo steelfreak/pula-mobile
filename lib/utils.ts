@@ -59,7 +59,6 @@ export const base64ToPythonByteLiteral = (base64: string): string => {
 export const checkIf401Error = (error: ApiError) => {
   if (error.status === 401) {
     alert('Unauthorized: Please check your credentials.');
-    // localStorage.removeItem(TOKEN_KEY);
     // window.location.href = '/';
   }
 }
