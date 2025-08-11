@@ -1,5 +1,4 @@
-// create a search bar with a text input on 80% left and a button on 20% right
-
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   TextInput,
@@ -8,56 +7,174 @@ import {
   Text,
   Image,
   ScrollView,
+  Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import { colors, fontSizes, fontWeights } from 'lib/theme';
 import { useLanguageStore } from 'stores/languageStore';
+import { useApiWithStore } from 'hooks/useApiWithStore';
+import { LexemeSearchResult } from 'types/api';
+import { showToast } from 'lib/toast';
 
-const options = [
-  // {
-  //   id: 1,
-  //   label: 'Mother',
-  //   brief: 'Mother, noun',
-  // },
-  // {
-  //   id: 2,
-  //   label: 'Father',
-  //   brief: 'Father, noun',
-  // },
-  // {
-  //   id: 3,
-  //   label: 'Brother',
-  //   brief: 'Brother, noun',
-  // },
-  // {
-  //   id: 4,
-  //   label: 'Sister',
-  //   brief: 'Sister, noun',
-  // },
-  // {
-  //   id: 5,
-  //   label: 'Grandmother',
-  //   brief: 'Grandmother, noun',
-  // },
-  // {
-  //   id: 6,
-  //   label: 'Grandfather',
-  //   brief: 'Grandfather, noun',
-  // },
-  // {
-  //   id: 7,
-  //   label: 'Grandmother',
-  //   brief: 'Grandmother, noun',
-  // },
-];
+interface SearchBarProps {
+  disabled?: boolean;
+  onSearch?: (query: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
+}
 
-export const SearchBar = () => {
+export const SearchBar = ({ 
+  disabled = false, 
+  onSearch, 
+  value = '', 
+  onChange 
+}: SearchBarProps) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [searchQuery, setSearchQuery] = useState(value);
+  const inputRef = useRef<TextInput>(null);
+  const suggestionsRef = useRef<ScrollView>(null);
+  
   const { setShowSelectLanguageModal } = useLanguageStore();
+  
+  // Get data from stores
+  const { 
+    searchLexemes, 
+    selectedSourceLanguage, 
+    lexemes, 
+    lexemeLoading,
+    setClickedLexeme
+  } = useApiWithStore();
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (query: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          if (query.trim() && selectedSourceLanguage) {
+            searchLexemes({
+              ismatch: 0,
+              search: query,
+              src_lang: selectedSourceLanguage.lang_code
+            }).catch(() => {
+              // Error handling is done in the hook
+            });
+          }
+        }, 300); // 300ms delay
+      };
+    })(),
+    [searchLexemes, selectedSourceLanguage]
+  );
+
+  // Trigger search when value changes
+  useEffect(() => {
+    if (value.trim() === "") {
+      setShowSuggestions(false);
+      return;
+    }
+    
+    debouncedSearch(value);
+    setShowSuggestions(true);
+  }, [value, debouncedSearch]);
+
+  // Update searchQuery when value prop changes
+  useEffect(() => {
+    setSearchQuery(value);
+  }, [value]);
+
+  const handleInputChange = async (text: string) => {
+    setSearchQuery(text);
+    onChange?.(text);
+    
+    if (text.trim() === "") {
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      await searchLexemes({
+        ismatch: 0,
+        search: text,
+        src_lang: selectedSourceLanguage?.lang_code || "",
+      });
+    } catch (error) {
+      console.error("Search failed:", error);
+    }
+
+    setShowSuggestions(true);
+    setSelectedIndex(-1);
+  };
+
+  const handleInputFocus = () => {
+    if (disabled) {
+      showToast.error("Languages required", "You must select source and target language first.");
+      inputRef.current?.blur();
+      return;
+    }
+    setShowSuggestions(true);
+  };
+
+  const handleSuggestionSelect = (suggestion: LexemeSearchResult) => {
+    onChange?.(suggestion.label);
+    setSearchQuery(suggestion.label);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+    setClickedLexeme(suggestion); // Save the clicked lexeme to the store
+    onSearch?.(suggestion.label);
+    Keyboard.dismiss();
+  };
+
+  const handleSearch = () => {
+    setShowSuggestions(false);
+    onSearch?.(searchQuery);
+    Keyboard.dismiss();
+  };
+
+  const clearInput = () => {
+    onChange?.("");
+    setSearchQuery("");
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  };
+
+  const handleKeyPress = (e: any) => {
+    if (disabled || !showSuggestions || lexemes.length === 0) return;
+
+    // Note: React Native doesn't have the same keyboard event handling as web
+    // This is a simplified version - you might want to use a library like react-native-keyboard-aware-scroll-view
+    // or implement custom keyboard handling based on your needs
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.searchBarContainer}>
         <View style={styles.inputContainer}>
-          <TextInput style={styles.input} placeholder="Search" />
+          <TextInput
+            ref={inputRef}
+            style={[
+              styles.input,
+              disabled && styles.inputDisabled
+            ]}
+            value={searchQuery}
+            onChangeText={handleInputChange}
+            onFocus={handleInputFocus}
+            onKeyPress={handleKeyPress}
+            placeholder="Type your word here"
+            placeholderTextColor={colors.tertiary}
+            editable={!disabled}
+            returnKeyType="search"
+            onSubmitEditing={handleSearch}
+          />
+          {searchQuery && !disabled && (
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={clearInput}
+            >
+              <Text style={styles.clearButtonText}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <TouchableOpacity
@@ -71,16 +188,39 @@ export const SearchBar = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Results */}
-      {options.length > 0 && (
-        <ScrollView style={styles.resultsContainer}>
-          {options.map((option, index) => (
-            <TouchableOpacity key={option.id} style={styles.resultItem} onPress={() => {}}>
-              <Text style={styles.resultLabel}>{option.label}</Text>
-              <Text style={styles.resultBrief}>{option.brief}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+      {/* Suggestions Dropdown */}
+      {!disabled && showSuggestions && lexemes.length > 0 && (
+        <View style={styles.suggestionsContainer}>
+          <ScrollView
+            ref={suggestionsRef}
+            style={styles.suggestionsScroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            {lexemeLoading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.loadingText}>Searching...</Text>
+              </View>
+            )}
+            {!lexemeLoading && lexemes.map((lexeme, index) => (
+              <TouchableOpacity
+                key={lexeme.id}
+                style={[
+                  styles.suggestionItem,
+                  index === selectedIndex && styles.suggestionItemSelected
+                ]}
+                onPress={() => handleSuggestionSelect(lexeme)}
+              >
+                <View style={styles.suggestionContent}>
+                  <Text style={styles.suggestionLabel}>{lexeme.label}</Text>
+                  <Text style={styles.suggestionDescription}>
+                    {lexeme.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -88,7 +228,7 @@ export const SearchBar = () => {
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
+    position: 'relative',
   },
   searchBarContainer: {
     flexDirection: 'row',
@@ -99,60 +239,98 @@ const styles = StyleSheet.create({
     flex: 5,
     borderWidth: 1,
     borderColor: colors.tertiary,
-    borderRadius: 5,
-    padding: 9,
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
   },
   input: {
+    flex: 1,
     fontSize: fontSizes.lg,
     color: colors.dark,
   },
+  inputDisabled: {
+    backgroundColor: colors.lightGray,
+    color: colors.tertiary,
+  },
+  clearButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  clearButtonText: {
+    fontSize: fontSizes.md,
+    color: colors.tertiary,
+  },
   buttonContainer: {
-    // flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.light,
     borderWidth: 1,
     borderColor: colors.primary,
-    borderRadius: 5,
+    borderRadius: 8,
     marginLeft: 10,
     paddingVertical: 12,
     paddingHorizontal: 15,
-  },
-  buttonText: {
-    color: colors.danger,
-    fontSize: fontSizes.lg,
   },
   buttonImage: {
     width: 40,
     height: 40,
   },
-
-  resultsContainer: {
-    // flex: 1,
+  suggestionsContainer: {
     position: 'absolute',
-    top: 75,
+    top: 70,
     left: 0,
     right: 0,
-    maxHeight: 400,
+    maxHeight: 300,
     zIndex: 1000,
-    backgroundColor: colors.lightGray,
-    borderRadius: 5,
+    backgroundColor: colors.white,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.tertiary,
+    shadowColor: colors.dark,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  resultItem: {
-    padding: 10,
-    // borderBottomWidth: 1,
-    borderBottomColor: colors.tertiary,
+  suggestionsScroll: {
+    maxHeight: 300,
   },
-  resultLabel: {
-    fontSize: fontSizes.lg,
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: fontSizes.sm,
+    color: colors.tertiary,
+  },
+  suggestionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
+  },
+  suggestionItemSelected: {
+    backgroundColor: colors.lightGray,
+  },
+  suggestionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  suggestionLabel: {
+    fontSize: fontSizes.md,
     color: colors.dark,
     fontWeight: fontWeights.medium as any,
+    flex: 1,
   },
-  resultBrief: {
+  suggestionDescription: {
     fontSize: fontSizes.sm,
-    color: colors.dark,
-    fontWeight: fontWeights.normal as any,
+    color: colors.tertiary,
+    marginTop: 2,
   },
 });
