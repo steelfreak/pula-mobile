@@ -19,6 +19,7 @@ const styles = {
   container: {
     // marginTop: 45,
     flex: 1,
+    backgroundColor: colors.lightGray,
   },
   content: {
     margin: 16,

@@ -13,6 +13,8 @@ export const colors = {
   lightGray: '#f8f9fa', // Base80
   darkGray: '#d2d5d9', // Base70
   white: '#ffffff',
+  black: '#000000',
+  transparent: 'transparent',
 };
 
 // font sizes

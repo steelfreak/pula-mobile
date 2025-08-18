@@ -21,8 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         {/* Left - Hamburger Menu */}
-        <View style={styles.leftSection}>
-          {showMenu && (
+        {showMenu && (
+          <View style={styles.leftSection}>
             <TouchableOpacity style={styles.menuButton} onPress={onMenuPress} activeOpacity={0.7}>
               <View style={styles.hamburgerIcon}>
                 <View style={styles.hamburgerLine} />
@@ -30,8 +30,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <View style={styles.hamburgerLine} />
               </View>
             </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Middle - Title */}
         <View style={styles.centerSection}>
@@ -39,15 +39,15 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
 
         {/* Right - User Icon */}
-        <View style={styles.rightSection}>
-          {showUser && (
+        {showUser && (
+          <View style={styles.rightSection}>
             <TouchableOpacity style={styles.userButton} onPress={onUserPress} activeOpacity={0.7}>
               <View style={styles.userIcon}>
                 <Text style={styles.userIconText}>👤</Text>
               </View>
             </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );

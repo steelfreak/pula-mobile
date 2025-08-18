@@ -38,21 +38,33 @@ const styles = StyleSheet.create({
     backgroundColor: colors.lightGray,
   },
   tabButton: {
-    borderRadius: 5,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'transparent',
+    // borderRadius: 5,
     padding: 15,
     paddingHorizontal: 20,
-    backgroundColor: colors.lightGray,
+    backgroundColor: colors.white,
   },
   activeTabButton: {
-    backgroundColor: colors.primary,
+    // backgroundColor: colors.primary,
     color: colors.light,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderTopRightRadius: 5,
+    borderTopLeftRadius: 5,
+    borderColor: colors.tertiary,
   },
   tabButtonText: {
     fontSize: fontSizes.lg,
-    fontWeight: 'bold',
+    // fontWeight: 'bold',
     
   },
   activeTabButtonText: {
-    color: colors.light,
+    // color: colors.light,
+    // fontWeight: 'bold',
+    color: colors.primary,
   },
 });

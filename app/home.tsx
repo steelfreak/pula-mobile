@@ -23,9 +23,9 @@ export default function HomeScreen() {
       <Container
         header={
           <Header
-            title="AGPB"
-            showMenu={true}
-            showUser={true}
+            title="African German Phrasebook"
+            showMenu={false}
+            showUser={false}
             onMenuPress={handleMenuPress}
             onUserPress={handleUserPress}
           />

@@ -78,16 +78,20 @@ export const TabContent = ({
 
                 {/* Bottom Section: Word and Language */}
                 <View style={styles.wordSection}>
-                  <Text style={styles.wordText}>{glossWithSense.gloss.value}</Text>
+                  <Text style={styles.wordText}>{glossWithSense.gloss.value ?? 'Label not available'}</Text>
                   <Text style={styles.languageCode}>{glossWithSense.gloss.language}</Text>
                 </View>
               </View>
-              
+
               {glossWithSense.gloss.audio ? (
                 <View style={styles.audioContainer}>
                   <AudioPlayer audioUrl={glossWithSense.gloss.audio} />
                 </View>
-              ) : null}
+              ) : (
+                <View>
+                  <Text>No audio</Text>
+                </View>
+              )}
             </View>
           ))}
       </View>
@@ -98,11 +102,15 @@ export const TabContent = ({
 const styles = StyleSheet.create({
   tabContent: {
     backgroundColor: colors.white,
-    padding: 5,
-    marginTop: 10,
-    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    // marginTop: 10,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
     borderColor: colors.tertiary,
-    borderRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
   },
   imageContainer: {
     alignItems: 'center',

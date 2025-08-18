@@ -108,11 +108,13 @@ export default function LexemeDetails() {
         tabKey="target1"
         title={selectedTargetLanguage1?.lang_label || 'Target 1'}
         glossesWithSense={target1LexemeDetails}
+        lexemeDetail={singleLexemeObj}
       />
       <TabContent
         tabKey="target2"
         title={selectedTargetLanguage2?.lang_label || 'Target 2'}
         glossesWithSense={target2LexemeDetails}
+        lexemeDetail={singleLexemeObj}
       />
     </View>
   );
@@ -127,6 +129,8 @@ const styles = StyleSheet.create({
   tabButtonContainer: {
     flexDirection: 'row',
     // justifyContent: 'space-between',
-    backgroundColor: colors.lightGray,
+    backgroundColor: colors.transparent,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.tertiary,
   },
 });
