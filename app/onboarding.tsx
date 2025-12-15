@@ -45,8 +45,8 @@ export default function OnboardingScreen() {
               <Text style={{ fontSize: 80, color: colors.white }}>📱</Text>
             </View>
           ),
-          title: 'Welcome to AGPB',
-          subtitle: 'Easiest way to translate from one language to another',
+          title: 'Welcome to PULA',
+          subtitle: 'A tool for learning and enriching lexicographical data in multiple languages on Wikidata',
           titleStyles: {
             color: colors.dark,
             fontSize: fontSizes.xxl * 1.3,

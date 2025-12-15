@@ -23,7 +23,7 @@ export default function HomeScreen() {
       <Container
         header={
           <Header
-            title="African German Phrasebook"
+            title="PULA | (People's Universal Lexical Access)"
             showMenu={false}
             showUser={false}
             onMenuPress={handleMenuPress}

@@ -10,7 +10,7 @@ export default function DefaultHome() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to AGPB</Text>
+        <Text style={styles.title}>Welcome to PULA</Text>
         <Text style={styles.subtitle}>
           The easiest way to translate from one language to another
         </Text>
