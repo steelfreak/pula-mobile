@@ -1,3 +1,9 @@
+/**
+ * @fileoverview A default screen component displayed when the user has not yet selected
+ * the required source and target languages. It provides a welcome message and a clear
+ * call-to-action button to open the language selection modal.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SelectLanguages } from '../components/SelectLanguages';
@@ -5,6 +11,13 @@ import { colors, fontSizes } from '../lib/theme';
 import { Button } from '../components/ui/Button';
 import { useLanguageStore } from '../stores/languageStore';
 
+/**
+ * @function DefaultHome
+ * @description Renders the initial landing page/placeholder screen. It prompts the user
+ * to select the languages required to use the main translation functionality.
+ *
+ * @returns {JSX.Element} The rendered welcome screen and the hidden language selection modal.
+ */
 export default function DefaultHome() {
   const { showSelectLanguageModal, setShowSelectLanguageModal } = useLanguageStore();
   return (

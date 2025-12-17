@@ -22,14 +22,48 @@ import {
   SELECTED_LEXEME,
 } from "../lib/constants";
 
+/**
+ * @fileoverview Custom hook that integrates API calls with global state management (Zustand stores)
+ * and local persistence (AsyncStorage). It handles loading/error states, authentication token management,
+ * and data hydration on mount.
+ */
 
+/**
+ * @function useApiWithStore
+ * @description Provides a comprehensive interface for performing API operations and
+ * automatically updating the corresponding global stores (Auth, Language, Lexeme).
+ *
+ * @returns {object} An object containing memoized action functions and selected state variables from the stores.
+ *
+ * @returns {function(AddLabeledTranslationRequest[]): Promise<void>} return.addLabeledTranslation Function to add a labeled translation.
+ * @returns {function(AddAudioTranslationRequest[]): Promise<void>} return.addAudioTranslation Function to add an audio translation.
+ * @returns {function(): Promise<Language[]>} return.getLanguages Function to fetch and store languages.
+ * @returns {function(string | null): void} return.setSelectedSourceLanguage Setter for the source language in the store.
+ * @returns {function(string | null): void} return.setSelectedTargetLanguage1 Setter for the first target language in the store.
+ * @returns {function(string | null): void} return.setSelectedTargetLanguage2 Setter for the second target language in the store.
+ * @returns {function(LexemeSearchRequest): Promise<LexemeSearchResult[] | undefined>} return.searchLexemes Function to search and store lexemes.
+ * @returns {function(): Promise<LexemeDetailResult | undefined>} return.getLexemeDetails Function to fetch and store lexeme details.
+ * @returns {function(string): void} return.setQuery Setter for the current search query in the store.
+ * @returns {function(object | null): void} return.setClickedLexeme Setter for the lexeme clicked for detail viewing.
+ * @returns {function(LexemeMissingAudioResquest): Promise<LexemeMissingAudioResponse>} return.getLexemeMissingAudio Function to fetch lexemes missing audio.
+ * @returns {function(): Promise<LoginResponse>} return.login Function to start the OAuth login process.
+ * @returns {function(string, string): Promise<OauthCallbackResponse>} return.oauthCallback Function to finalize OAuth and set the token.
+ * @returns {function(): Promise<void>} return.logout Function to clear session and token.
+ *
+ * @returns {Language[] | null} return.languages List of all available languages.
+ * @returns {object | null} return.selectedSourceLanguage The currently selected source language object.
+ * (Other state variables are also returned for immediate access.)
+ */
 export const useApiWithStore = () => {
   const token = useAuthStore((state: AuthState) => state.token);
   const hydrateAuth = useAuthStore((state: AuthState) => state.hydrate);
   const hydrateLanguage = useLanguageStore((state: LanguageState) => state.hydrate);
   const hydrateLexeme = useLexemeStore((state: LexemeState) => state.hydrate);
-  
-  // Hydrate all stores on mount
+
+  /**
+   * @description Effect hook to hydrate all global stores from AsyncStorage upon component mount.
+   * @sideeffect Reads persistent state from AsyncStorage and sets initial store state.
+   */
   useEffect(() => {
     const hydrateStores = async () => {
       await hydrateAuth();
@@ -73,7 +107,11 @@ export const useApiWithStore = () => {
   const setLexemeError = useLexemeStore((state: LexemeState) => state.setError);
 
   /**
-   * Get the list of languages from the API and store it in the store and local storage
+   * @description Fetches the list of languages from the API.
+   * @returns {Promise<Language[]>} A promise that resolves to the fetched list of Language objects.
+   * @throws {ApiError} Throws a standardized error if the API call fails.
+   * @sideeffect Sets the authentication token in the API client, updates `languageLoading` and `languageError` states,
+   * stores data in `LanguageStore`, and persists the list to `AsyncStorage` under `LIST_OF_LANGUAGES`.
    */
   const getLanguages = useCallback(async () => {
     api.setAuthToken(token);
@@ -99,7 +137,12 @@ export const useApiWithStore = () => {
   }, [setLanguages, setLanguageLoading, setLanguageError, token]);
 
   /**
-   * Search for lexemes and store them in the store and local storage
+   * @description Searches for lexemes based on a query and stores the results.
+   * @param {LexemeSearchRequest} request The search criteria including search text and source language.
+   * @returns {Promise<LexemeSearchResult[] | undefined>} A promise that resolves to the array of search results, or undefined if request is incomplete.
+   * @throws {ApiError} Throws a standardized error if the API call fails.
+   * @sideeffect Updates `lexemeLoading` and `lexemeError` states, sets the search query and results in `LexemeStore`,
+   * and persists the results to `AsyncStorage` under `LIST_OF_LEXEMES`.
    */
   const searchLexemes = useCallback(
     async (request: LexemeSearchRequest) => {
@@ -132,7 +175,12 @@ export const useApiWithStore = () => {
   );
 
   /**
-   * Get the details of a lexeme and store it in the store and local storage
+   * @description Fetches detailed information for the currently selected/clicked lexeme,
+   * using language settings from the LanguageStore.
+   * @returns {Promise<LexemeDetailResult | undefined>} A promise that resolves to the detailed lexeme result, or undefined if parameters are missing.
+   * @throws {ApiError} Throws a standardized error if the API call fails.
+   * @sideeffect Reads necessary parameters directly from the global stores, updates `lexemeLoading` and `lexemeError` states,
+   * sets the result in `LexemeStore`, and persists the result to `AsyncStorage` under `SELECTED_LEXEME`.
    */
   const getLexemeDetails = useCallback(async () => {
     setLexemeLoading(true);
@@ -158,8 +206,6 @@ export const useApiWithStore = () => {
       lang_2: selectedTargetLanguage2?.lang_code || "",
     };
 
-    // Construct request parameters
-
     try {
       const details = await api.getLexemeDetails(request);
       await AsyncStorage.setItem(SELECTED_LEXEME, JSON.stringify(details));
@@ -181,7 +227,11 @@ export const useApiWithStore = () => {
   }, [setSelectedLexeme, setLexemeLoading, setLexemeError]);
 
   /**
-   * Add a labeled translation to a lexeme and store it in the store and local storage
+   * @description Submits a new labeled translation to the API for a lexeme.
+   * @param {AddLabeledTranslationRequest[]} request The array of translation data to be added.
+   * @returns {Promise<void>} A promise that resolves upon successful submission.
+   * @throws {ApiError} Throws a standardized error if the API call fails.
+   * @sideeffect Sets the authentication token, updates `lexemeLoading` and `lexemeError` states.
    */
   const addLabeledTranslation = useCallback(
     async (request: AddLabeledTranslationRequest[]) => {
@@ -204,7 +254,11 @@ export const useApiWithStore = () => {
   );
 
   /**
-   * Add an audio translation to a lexeme and store it in the store and local storage
+   * @description Submits a new audio translation to the API for a lexeme.
+   * @param {AddAudioTranslationRequest[]} request The array of audio translation data to be added.
+   * @returns {Promise<void>} A promise that resolves upon successful submission.
+   * @throws {ApiError} Throws a standardized error if the API call fails.
+   * @sideeffect Sets the authentication token, updates `lexemeLoading` and `lexemeError` states.
    */
   const addAudioTranslation = useCallback(
     async (request: AddAudioTranslationRequest[]) => {
@@ -227,7 +281,11 @@ export const useApiWithStore = () => {
   );
 
   /**
-   * Get the missing audio lexemes and store it in the store and local storage
+   * @description Fetches the list of lexemes that are missing audio recordings for a specific language.
+   * @param {LexemeMissingAudioResquest} request The request containing the target language ID.
+   * @returns {Promise<LexemeMissingAudioResponse>} A promise that resolves to the result object containing the list.
+   * @throws {ApiError} Throws a standardized error if the API call fails.
+   * @sideeffect Updates `lexemeLoading` and `lexemeError` states, and shows an error toast on failure.
    */
   const getLexemeMissingAudio = useCallback(
     async (request: LexemeMissingAudioResquest) => {
@@ -250,7 +308,9 @@ export const useApiWithStore = () => {
   );
 
   /**
-   * Login to the API and store the token in the store and local storage
+   * @description Initiates the OAuth login process by retrieving the redirect URL from the API.
+   * @returns {Promise<LoginResponse>} A promise that resolves to the login response object containing the redirect string.
+   * @throws {ApiError} Throws a standardized error if the API call fails, and shows a toast.
    */
   const login = useCallback(async () => {
     try {
@@ -265,6 +325,14 @@ export const useApiWithStore = () => {
   const setUsername = useAuthStore((state: AuthState) => state.setUsername);
   const setToken = useAuthStore((state: AuthState) => state.setToken);
 
+  /**
+   * @description Handles the final step of the OAuth flow, exchanging the verifier/token for a permanent application token.
+   * @param {string} oauth_verifier The verifier string received from the OAuth provider.
+   * @param {string} oauth_token The temporary token received from the OAuth provider.
+   * @returns {Promise<OauthCallbackResponse>} A promise that resolves to the final auth response.
+   * @throws {ApiError} Throws a standardized error if the exchange fails, and shows a toast.
+   * @sideeffect Sets the received `token` and `username` in the `AuthStore` if successful.
+   */
   const oauthCallback = useCallback(
     async (oauth_verifier: string, oauth_token: string) => {
       api.setAuthToken(token);
@@ -295,7 +363,10 @@ export const useApiWithStore = () => {
   const clearUsername = useAuthStore((state: AuthState) => state.clearUsername);
 
   /**
-   * Logout from the API and clear the token and username in the store and local storage
+   * @description Performs the API logout call and clears the local authentication state.
+   * @returns {Promise<void>} A promise that resolves upon successful logout.
+   * @throws {ApiError} Throws a standardized error if the API call fails, and shows a toast.
+   * @sideeffect Clears the token in the API client, calls `clearToken` and `clearUsername` actions in the `AuthStore`.
    */
   const logout = useCallback(async () => {
     api.setAuthToken(token);

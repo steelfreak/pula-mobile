@@ -1,4 +1,8 @@
-// show the details of a lexeme
+/**
+ * @fileoverview Component used within LexemeDetails to render the content for a single language tab
+ * (Source, Target 1, or Target 2). It displays detailed information about a lexeme, including
+ * its ID, category, image, translations/glosses, linking information to Wikidata, and an audio player.
+ */
 
 import React from 'react';
 import { View, Text, StyleSheet, Image, Linking } from 'react-native';
@@ -15,6 +19,14 @@ interface LexemeDetailResultProps {
   //   onContribute?: (type: 'label' | 'audio') => void;
 }
 
+/**
+ * @function TabContent
+ * @description Displays the details of a lexeme or its translation/gloss in a single tab view.
+ * Visibility is controlled by matching `tabKey` with the global `activeTab` state.
+ *
+ * @param {LexemeDetailResultProps} props The props object containing data and tab key.
+ * @returns {JSX.Element | null} The styled tab content or null if the tab is not active.
+ */
 export const TabContent = ({
   title,
   tabKey,
@@ -181,16 +193,28 @@ const styles = StyleSheet.create({
     color: colors.dark,
     marginBottom: 4,
   },
+  /**
+   * @property languageCode
+   * @description Style for the language code display.
+   */
   languageCode: {
     fontSize: fontSizes.sm,
     color: colors.dark,
   },
+  /**
+   * @property bottomSection
+   * @description Layout for the section containing links and the word/gloss.
+   */
   bottomSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 16,
   },
+  /**
+   * @property audioContainer
+   * @description Container for the AudioPlayer component.
+   */
   audioContainer: {
     marginTop: 12,
     paddingHorizontal: 8,

@@ -1,4 +1,8 @@
-// show the details of a lexeme
+/**
+ * @fileoverview Component responsible for fetching and displaying the detailed information
+ * of a selected lexeme (word/concept) across the chosen source and target languages.
+ * It uses a tab structure to organize the details for each language.
+ */
 
 import { View, StyleSheet } from 'react-native';
 import { colors } from 'lib/theme';
@@ -8,6 +12,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useApiWithStore } from 'hooks/useApiWithStore';
 import { showToast } from 'lib/toast';
 import { GlossWithSense } from 'types/api';
+
+/**
+ * @function LexemeDetails
+ * @description Manages the state and API calls necessary to fetch and display the full
+ * details of a lexeme. It separates the retrieved glosses/translations into three lists
+ * corresponding to the Source, Target 1, and Target 2 languages.
+ *
+ * @returns {JSX.Element} The rendered tabbed view showing lexeme details.
+ */
 export default function LexemeDetails() {
   const {
     clickedLexeme,
@@ -23,12 +36,19 @@ export default function LexemeDetails() {
   const [target2LexemeDetails, setTarget2LexemeDetails] = useState<GlossWithSense[]>([]);
   const [singleLexemeObj, setSingleLexemeObj] = useState<any>(null);
 
+  /**
+   * @description Effect to trigger the detail fetch whenever a new lexeme is selected/clicked.
+   */
   useEffect(() => {
     if (clickedLexeme && clickedLexeme.id) {
       handleGetLexemeDetails();
     }
   }, [clickedLexeme]);
 
+  /**
+   * @description Effect to process the full API result (`selectedLexeme`) once it's available.
+   * It filters the list of all glosses by the selected language codes and updates the local state.
+   */
   useEffect(() => {
     if (!selectedLexeme || !selectedLexeme.lexeme || !selectedLexeme.glosses) {
       return;
@@ -53,6 +73,7 @@ export default function LexemeDetails() {
   }, [selectedLexeme]);
 
   const handleGetLexemeDetails = useCallback(async () => {
+    // Validation check before making the API call
     if (!selectedSourceLanguage || (!selectedTargetLanguage1 && !selectedTargetLanguage2)) {
       showToast.error(
         'Languages required',
@@ -63,9 +84,10 @@ export default function LexemeDetails() {
 
     setIsLoadingDetails(true);
     try {
-      await getLexemeDetails();
+      await getLexemeDetails(); // API call is handled by the hook
     } catch (error) {
       console.error('Failed to get lexeme details:', error);
+      // Error toast is typically handled inside `getLexemeDetails` implementation via `setError`
     } finally {
       setIsLoadingDetails(false);
     }

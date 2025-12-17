@@ -1,3 +1,9 @@
+/**
+ * @fileoverview A complex search bar component for the application, featuring real-time
+ * search suggestions fetched from the API (debounced) and integration with the global store
+ * for displaying results and managing selected languages.
+ */
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -16,6 +22,14 @@ import { useApiWithStore } from 'hooks/useApiWithStore';
 import { LexemeSearchResult } from 'types/api';
 import { showToast } from 'lib/toast';
 
+/**
+ * @interface SearchBarProps
+ * @description Props for the SearchBar component.
+ * @property {boolean} [disabled=false] If true, disables input and suggestions, and prompts user to select languages.
+ * @property {function(string): void} [onSearch] Callback fired when a search is explicitly triggered (e.g., enter/submit).
+ * @property {string} [value=''] The current value of the search input (controlled externally).
+ * @property {function(string): void} [onChange] Callback fired when the input text changes.
+ */
 interface SearchBarProps {
   disabled?: boolean;
   onSearch?: (query: string) => void;
@@ -23,30 +37,33 @@ interface SearchBarProps {
   onChange?: (value: string) => void;
 }
 
-export const SearchBar = ({ 
-  disabled = false, 
-  onSearch, 
-  value = '', 
-  onChange 
-}: SearchBarProps) => {
+/**
+ * @function SearchBar
+ * @description Component that provides search functionality with API-driven, debounced suggestions
+ * and a button to open the language selection modal.
+ *
+ * @param {SearchBarProps} props The props object.
+ * @returns {JSX.Element} The rendered search bar and suggestions dropdown.
+ */
+export const SearchBar = ({ disabled = false, onSearch, value = '', onChange }: SearchBarProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState(value);
   const inputRef = useRef<TextInput>(null);
   const suggestionsRef = useRef<ScrollView>(null);
-  
-  const { setShowSelectLanguageModal } = useLanguageStore();
-  
-  // Get data from stores
-  const { 
-    searchLexemes, 
-    selectedSourceLanguage, 
-    lexemes, 
-    lexemeLoading,
-    setClickedLexeme
-  } = useApiWithStore();
 
-  // Debounced search function
+  // Action to show the language selection modal
+  const { setShowSelectLanguageModal } = useLanguageStore();
+
+  // Data and actions from the combined store/API hook
+  const { searchLexemes, selectedSourceLanguage, lexemes, lexemeLoading, setClickedLexeme } =
+    useApiWithStore();
+
+  /**
+   * @description Memoized and debounced function to call the search API.
+   * It waits for a 300ms pause in typing before executing the search.
+   * @type {function(string): void}
+   */
   const debouncedSearch = useCallback(
     (() => {
       let timeoutId: NodeJS.Timeout;
@@ -68,9 +85,11 @@ export const SearchBar = ({
     [searchLexemes, selectedSourceLanguage]
   );
 
-  // Trigger search when value changes
+  /**
+   * @description Effect to trigger the debounced search whenever the external `value` prop changes.
+   */
   useEffect(() => {
-    if (value.trim() === "") {
+    if (value.trim() === '') {
       setShowSuggestions(false);
       return;
     }
@@ -79,11 +98,18 @@ export const SearchBar = ({
     setShowSuggestions(true);
   }, [value, debouncedSearch]);
 
-  // Update searchQuery when value prop changes
+  /**
+   * @description Effect to synchronize internal `searchQuery` state with external `value` prop.
+   */
   useEffect(() => {
     setSearchQuery(value);
   }, [value]);
 
+  /**
+   * @description Handles text input changes, updating internal state and external prop, and triggering search.
+   * @param {string} text The new text value of the input.
+   * @returns {void}
+   */
   const handleInputChange = async (text: string) => {
     setSearchQuery(text);
     onChange?.(text);
@@ -93,6 +119,7 @@ export const SearchBar = ({
       return;
     }
 
+    // Immediately trigger search on change
     try {
       await searchLexemes({
         ismatch: 0,
@@ -107,6 +134,11 @@ export const SearchBar = ({
     setSelectedIndex(-1);
   };
 
+  /**
+   * @description Handles input focus event. Prevents interaction if disabled, otherwise shows suggestions.
+   * @returns {void}
+   * @sideeffect Shows error toast if disabled, or updates `showSuggestions` state.
+   */
   const handleInputFocus = () => {
     if (disabled) {
       showToast.error("Languages required", "You must select source and target language first.");
@@ -116,6 +148,12 @@ export const SearchBar = ({
     setShowSuggestions(true);
   };
 
+  /**
+   * @description Handles selection of a suggestion from the dropdown.
+   * @param {LexemeSearchResult} suggestion The selected lexeme result object.
+   * @returns {void}
+   * @sideeffect Updates input text, hides suggestions, saves clicked lexeme to store, and dismisses keyboard.
+   */
   const handleSuggestionSelect = (suggestion: LexemeSearchResult) => {
     onChange?.(suggestion.label);
     setSearchQuery(suggestion.label);
@@ -126,12 +164,20 @@ export const SearchBar = ({
     Keyboard.dismiss();
   };
 
+  /**
+   * @description Handles explicit search submission (e.g., pressing the search key on the keyboard).
+   * @returns {void}
+   */
   const handleSearch = () => {
     setShowSuggestions(false);
     onSearch?.(searchQuery);
     Keyboard.dismiss();
   };
 
+  /**
+   * @description Clears the input field.
+   * @returns {void}
+   */
   const clearInput = () => {
     onChange?.("");
     setSearchQuery("");
@@ -139,6 +185,12 @@ export const SearchBar = ({
     inputRef.current?.focus();
   };
 
+  /**
+   * @description Placeholder for keyboard navigation handling (e.g., arrow keys).
+   * Note: Custom implementation for RN keyboard events is usually required.
+   * @param {any} e The keyboard event object.
+   * @returns {void}
+   */
   const handleKeyPress = (e: any) => {
     if (disabled || !showSuggestions || lexemes.length === 0) return;
 

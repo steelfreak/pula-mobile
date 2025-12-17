@@ -1,3 +1,9 @@
+/**
+ * @fileoverview A modal component that allows the user to select the source and two target languages
+ * for translation. It fetches the list of available languages on mount and updates the global
+ * language store upon selection.
+ */
+
 import React, { useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Select } from './ui/Select';
@@ -6,6 +12,12 @@ import { useLanguageStore } from 'stores/languageStore';
 import { colors } from 'lib/theme';
 import { useApiWithStore } from 'hooks/useApiWithStore';
 
+/**
+ * @interface SelectLanguagesProps
+ * @description Props for the SelectLanguages component.
+ * @property {function} [onClose] Optional callback function executed when the modal is closed without confirmation.
+ * @property {function} [onConfirm] Optional callback function executed when the 'Save and continue' button is pressed.
+ */
 interface SelectLanguagesProps {
   onClose?: () => void;
   onConfirm?: () => void;
@@ -13,8 +25,19 @@ interface SelectLanguagesProps {
 
 const { width, height } = Dimensions.get('window');
 
+/**
+ * @function SelectLanguages
+ * @description Renders a full-screen modal allowing the user to set the primary source and two
+ * secondary target languages for the application's translation context.
+ *
+ * @param {SelectLanguagesProps} props The props object containing optional close and confirm handlers.
+ * @returns {React.FC<SelectLanguagesProps>} The rendered language selection modal component.
+ */
 export const SelectLanguages: React.FC<SelectLanguagesProps> = ({ onClose, onConfirm }) => {
+  // Global state and actions for modal visibility from LanguageStore
   const { showSelectLanguageModal, setShowSelectLanguageModal } = useLanguageStore();
+
+  // API calls, selected languages, and setters from the combined API/Store hook
   const {
     getLanguages,
     languages,
@@ -25,16 +48,33 @@ export const SelectLanguages: React.FC<SelectLanguagesProps> = ({ onClose, onCon
     selectedTargetLanguage1,
     selectedTargetLanguage2,
   } = useApiWithStore();
+
+  /**
+   * @description Closes the modal and executes the optional `onClose` callback.
+   * @returns {void}
+   * @sideeffect Updates `showSelectLanguageModal` to false.
+   */
   const handleClose = () => {
     setShowSelectLanguageModal(false);
     onClose?.();
   };
 
+  /**
+   * @description Closes the modal and executes the optional `onConfirm` callback.
+   * Note: Language selections are saved immediately upon change, so this primarily closes the modal.
+   * @returns {void}
+   * @sideeffect Updates `showSelectLanguageModal` to false.
+   */
   const handleConfirm = () => {
     setShowSelectLanguageModal(false);
     onConfirm?.();
   };
 
+  /**
+   * @description Effect to fetch the list of languages from the API when the component mounts.
+   * @returns {void}
+   * @sideeffect Calls `getLanguages` to populate the `languages` array in the store.
+   */
   useEffect(() => {
     getLanguages();
   }, []);

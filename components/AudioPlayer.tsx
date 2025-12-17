@@ -1,12 +1,30 @@
+/**
+ * @fileoverview A custom audio player component built using Expo's `expo-av` library.
+ * It provides basic playback controls (play/pause), time display, and a progress bar
+ * for playing an audio file specified by a URL.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Audio } from 'expo-av';
 import { colors, fontSizes, fontWeights } from 'lib/theme';
 
+/**
+ * @interface AudioPlayerProps
+ * @description Props for the AudioPlayer component.
+ * @property {string} audioUrl The URL of the audio file to be played.
+ */
 interface AudioPlayerProps {
   audioUrl: string;
 }
 
+/**
+ * @function AudioPlayer
+ * @description Renders a player interface to handle audio playback.
+ *
+ * @param {AudioPlayerProps} props The props object containing the audio URL.
+ * @returns {React.FC<AudioPlayerProps>} The rendered audio player component.
+ */
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -14,6 +32,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
 
+  /**
+   * @description Cleanup effect: Unload the audio resource when the component unmounts
+   * or when the `sound` object changes.
+   */
   useEffect(() => {
     return sound
       ? () => {
@@ -22,6 +44,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
       : undefined;
   }, [sound]);
 
+  /**
+   * @description Converts time in milliseconds to a formatted string (m:ss).
+   * @param {number} milliseconds The time in milliseconds.
+   * @returns {string} The formatted time string.
+   */
   const formatTime = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -29,6 +56,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  /**
+   * @async
+   * @description Handles playing, pausing, and loading the audio file.
+   * @returns {Promise<void>}
+   * @sideeffect Manages `sound` state, playback status, and loading state.
+   */
   const playSound = async () => {
     try {
       setIsLoading(true);
@@ -68,6 +101,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl }) => {
     }
   };
 
+  /**
+   * @async
+   * @description Changes the current playback position of the audio.
+   * @param {number} seekPosition The desired position in milliseconds.
+   * @returns {Promise<void>}
+   */
   const seekTo = async (seekPosition: number) => {
     if (sound) {
       try {

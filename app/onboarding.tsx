@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Screen component that displays the application's onboarding flow
+ * using the `react-native-onboarding-swiper` library.
+ * It guides new users through key features and marks the process as complete upon finishing or skipping.
+ */
+
 import React from 'react';
 import { View, Text } from 'react-native';
 import { router } from 'expo-router';
@@ -5,7 +11,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Onboarding from 'react-native-onboarding-swiper';
 import { colors, fontSizes, fontWeights } from '../lib/theme';
 
+/**
+ * @function OnboardingScreen
+ * @description Renders the multi-page onboarding swiper. On completion or skip,
+ * it sets a flag in AsyncStorage and navigates the user to the home screen.
+ *
+ * @returns {JSX.Element} The rendered `Onboarding` component.
+ */
 export default function OnboardingScreen() {
+  /**
+   * @description Handles the action when the user presses the 'Done' button on the last slide.
+   * Marks onboarding as complete and redirects to the home screen.
+   * @returns {Promise<void>}
+   * @sideeffect Writes 'onboardingCompleted' flag to AsyncStorage and performs navigation using `router.replace`.
+   */
   const handleDone = async () => {
     try {
       await AsyncStorage.setItem('onboardingCompleted', 'true');
@@ -16,6 +35,12 @@ export default function OnboardingScreen() {
     }
   };
 
+  /**
+   * @description Handles the action when the user presses the 'Skip' button.
+   * Marks onboarding as complete and redirects to the home screen.
+   * @returns {Promise<void>}
+   * @sideeffect Writes 'onboardingCompleted' flag to AsyncStorage and performs navigation using `router.replace`.
+   */
   const handleSkip = async () => {
     try {
       await AsyncStorage.setItem('onboardingCompleted', 'true');
@@ -30,6 +55,9 @@ export default function OnboardingScreen() {
     <Onboarding
       onDone={handleDone}
       onSkip={handleSkip}
+      /**
+       * @description Array defining the content, styling, and behavior for each page of the onboarding swiper.
+       */
       pages={[
         {
           backgroundColor: colors.white,
